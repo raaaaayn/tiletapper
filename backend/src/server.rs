@@ -12,10 +12,6 @@ use crate::{
 use actix::prelude::*;
 use rand::prelude::*;
 
-struct After {
-    count: i32,
-}
-
 pub struct Server {
     pub rooms: HashMap<usize, Addr<Room>>,
     pub clients: HashMap<usize, Addr<Client>>,

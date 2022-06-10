@@ -149,7 +149,7 @@ impl Handler<Message> for Client {
 
 impl Handler<ConnectClientToRoom> for Client {
     type Result = ();
-    fn handle(&mut self, msg: ConnectClientToRoom, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: ConnectClientToRoom, _ctx: &mut Self::Context) {
         self.room = Some(msg.room_addr);
     }
 }
