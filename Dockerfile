@@ -15,4 +15,4 @@ FROM scratch
 WORKDIR /app
 COPY --from=backend-buildstep /target/armv7-unknown-linux-musleabihf/release/tiletapper /app
 COPY --from=frontend-buildstep /build /app/static
-# CMD ["./tiletapper"]
+CMD ["./tiletapper"]
