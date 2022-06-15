@@ -1,16 +1,15 @@
 FROM --platform=$BUILDPLATFORM localhost:5000/customrust AS backend-buildstep
-RUN echo $BUILDPLATFORM
-
+# this causes build files to be cached between builds
+RUN echo "fn main() {}" > dummy.rs
+COPY Cargo.toml ./
+RUN CC=arm-linux-gnueabihf-gcc cargo build --target=armv7-unknown-linux-musleabihf --release
 COPY backend ./
 RUN CC=arm-linux-gnueabihf-gcc cargo build --target=armv7-unknown-linux-musleabihf --release
-
 
 FROM --platform=$BUILDPLATFORM node:alpine AS frontend-buildstep
 COPY frontend ./
 RUN npm i
 RUN npm run build
-
-# FROM nginx:latest
 
 FROM scratch
 WORKDIR /app
