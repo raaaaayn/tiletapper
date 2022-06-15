@@ -6,39 +6,39 @@ use crate::{client, room};
 #[rtype(result = "()")]
 pub struct Message(pub String);
 
-#[derive(Message, Debug)]
+#[derive(Message, Debug, Clone)]
 #[rtype(result = "()")]
 pub struct CreateRoomMessage {
-    pub client_id: usize,
+    pub client_id: u32,
     pub client_addr: Addr<client::Client>,
 }
 
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
 pub struct JoinRoomMessage {
-    pub client_id: usize,
+    pub client_id: u32,
     pub client_addr: Addr<client::Client>,
-    pub room_id: usize,
+    pub room_id: u32,
 }
 
 #[derive(Message, Debug)]
-#[rtype(usize)]
+#[rtype(u32)]
 pub struct Connect {
     pub addr: Recipient<Message>,
     pub inbox_addr: Addr<client::Client>,
 }
 
 #[derive(Message, Debug, Clone)]
-#[rtype(usize)]
+#[rtype(u32)]
 pub struct Disconnect {
-    pub id: usize,
+    pub id: u32,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ClientMessage {
     /// Id of the client session
-    pub id: usize,
+    pub id: u32,
     /// Peer message
     pub msg: room::Tile,
 }

@@ -19,3 +19,8 @@ random_color = "0.6.1"
 
 env_logger = "0.9"
 log = "0.4"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1

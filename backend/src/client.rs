@@ -13,7 +13,7 @@ use crate::server;
 
 #[derive(Debug)]
 pub struct Client {
-    pub id: usize,
+    pub id: u32,
     pub room: Option<Addr<Room>>,
     pub server: Addr<server::Server>,
     pub color: String,
@@ -67,6 +67,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                 println!("Got message");
                 let msg = format!("{}", text.trim());
                 if msg.starts_with("create") {
+                    println!("client wants to create room");
                     self.server.do_send(CreateRoomMessage {
                         client_id: self.id,
                         client_addr: ctx.address().clone(),
@@ -75,10 +76,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                     let raw_str: Vec<&str> = msg.rsplitn(2, "\n").collect();
                     match raw_str.get(0) {
                         Some(str_id) => {
-                            let id = str_id.parse::<usize>();
+                            let id = str_id.parse::<u32>();
                             match id {
                                 Ok(id) => {
-                                    println!("{}", id);
+                                    println!("client wants to join room");
                                     self.server.do_send(JoinRoomMessage {
                                         client_id: self.id,
                                         client_addr: ctx.address().clone(),
@@ -96,19 +97,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                     self.room = None;
                     self.server.do_send(Disconnect { id: self.id });
                 } else {
-                    let board_data = serde_json::from_str(&msg).unwrap_or(BoardData {tile_num:0});
+                    let board_data =
+                        serde_json::from_str(&msg).unwrap_or(BoardData { tile_num: 0 });
                     let tile = room::Tile {
                         tile_num: board_data.tile_num,
                         color: Some(self.color.to_owned()),
                     };
                     match self.room.as_ref() {
                         Some(room) => {
+                            println!("Received tile");
                             room.do_send(ClientMessage {
                                 id: self.id,
                                 msg: tile,
                             });
                         }
-                        None => {}
+                        None => {
+                            println!("Received tile but no room to send it to")
+                        }
                     }
                 }
             }
@@ -123,9 +128,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
     }
 }
 
-fn gen_id() -> usize {
+fn gen_id() -> u32 {
     let mut th = thread_rng();
-    let id: usize = th.gen();
+    let id: u32 = th.gen();
     id
 }
 

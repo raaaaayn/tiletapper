@@ -13,8 +13,8 @@ use actix::prelude::*;
 use rand::prelude::*;
 
 pub struct Server {
-    pub rooms: HashMap<usize, Addr<Room>>,
-    pub clients: HashMap<usize, Addr<Client>>,
+    pub rooms: HashMap<u32, Addr<Room>>,
+    pub clients: HashMap<u32, Addr<Client>>,
 }
 
 impl Actor for Server {
@@ -29,18 +29,23 @@ impl Server {
         }
     }
 
-    fn create_room(&mut self, msg: CreateRoomMessage) -> Addr<Room> {
+    fn create_room(&mut self, msg: CreateRoomMessage) -> u32 {
         let mut th = thread_rng();
-        let id: usize = th.gen();
-        println!("Room {} added", id);
+        let id: u32 = th.gen();
+        println!("Room created");
         let room = Room::new().start();
+        msg.client_addr.do_send(ConnectClientToRoom {
+            room_addr: room.clone(),
+        });
         room.do_send(JoinRoomMessage {
             client_id: msg.client_id,
             client_addr: msg.client_addr,
             room_id: id,
         });
         self.rooms.insert(id, room.clone());
-        room.clone()
+        let rooms_str = format!("Room\n{}", id.to_string());
+        self.send_message_to_all_clients(rooms_str);
+        id
     }
 
     fn join_room(&mut self, msg: JoinRoomMessage) {
@@ -50,6 +55,7 @@ impl Server {
                 msg.client_addr.do_send(ConnectClientToRoom {
                     room_addr: room.clone(),
                 });
+                println!("join room message sent from server");
                 room.do_send(JoinRoomMessage {
                     client_id: msg.client_id,
                     client_addr: msg.client_addr,
@@ -57,33 +63,40 @@ impl Server {
                 })
             }
             None => {
-                eprintln!("Room does not exist")
+                eprintln!(
+                    "Room does not exist\nmsg room id {}\nself rooms {:?}",
+                    msg.room_id, self.rooms
+                )
             }
         }
     }
-    fn delete_room(&mut self, id: usize) -> usize {
+    fn delete_room(&mut self, id: u32) -> u32 {
         self.rooms.remove(&id);
         println!("\n{:#?}\n", self.rooms);
         id
     }
-    fn add_client(&mut self, addr: Addr<Client>) -> usize {
+    fn add_client(&mut self, addr: Addr<Client>) -> u32 {
         let mut th = thread_rng();
-        let id: usize = th.gen();
+        let id: u32 = th.gen();
         println!("Client {} added", id);
         self.clients.insert(id, addr);
         id
     }
-    fn remove_client(&mut self, id: usize) -> usize {
+    fn remove_client(&mut self, id: u32) -> u32 {
         self.clients.remove(&id);
         println!("\n{:#?}\n", self.clients);
         id
     }
+    fn send_message_to_all_clients(&self, msg: String) {
+        for (_id, addr) in self.clients.iter() {
+            addr.do_send(Message(msg.clone()));
+        }
+    }
 }
 
 impl Handler<Connect> for Server {
-    type Result = usize;
+    type Result = u32;
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        println!("Someone joined {:?}", msg);
         let client_id = self.add_client(msg.inbox_addr.clone());
         if !self.rooms.is_empty() {
             let mut rooms_str = String::from("rooms");
@@ -103,7 +116,7 @@ impl Handler<Connect> for Server {
 impl Handler<CreateRoomMessage> for Server {
     type Result = ();
     fn handle(&mut self, msg: CreateRoomMessage, _: &mut Context<Self>) -> Self::Result {
-        self.create_room(msg);
+        self.create_room(msg.clone());
     }
 }
 
@@ -115,9 +128,8 @@ impl Handler<JoinRoomMessage> for Server {
 }
 
 impl Handler<Disconnect> for Server {
-    type Result = usize;
+    type Result = u32;
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) -> Self::Result {
-        println!("Someone left {:?}", msg);
         for (_id, room) in self.rooms.iter() {
             room.do_send(msg.to_owned())
         }

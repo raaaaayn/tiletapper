@@ -7,16 +7,25 @@
 	let localboard = get(board);
 	let localrooms = get(rooms);
 	let loading = true;
+	let error = false;
+
 	onMount(() => {
-		connect();
-		board.subscribe((changed) => {
-			console.log({ changed });
-			localboard = get(board);
+		try {
+			connect();
+			board.subscribe((changed) => {
+				console.log({ changed });
+				localboard = get(board);
+				loading = false;
+			});
+			rooms.subscribe(() => {
+				localrooms = get(rooms);
+			});
+		} catch (err) {
+			console.log('Error happened');
+			console.error(err);
 			loading = false;
-		});
-		rooms.subscribe(() => {
-			localrooms = get(rooms);
-		});
+			error = true;
+		}
 	});
 
 	function createRoom() {
@@ -36,8 +45,28 @@
 	}
 </script>
 
-<div class="">
-	{#if localboard && localboard.length > 0}
+<div>
+	{#if loading}
+		<div class="flex h-screen justify-center items-center">
+			<svg width="89" height="89" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+				><path
+					d="M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z"
+					><animateTransform
+						attributeName="transform"
+						type="rotate"
+						calcMode="linear"
+						dur="0.75s"
+						values="0 12 12;360 12 12"
+						repeatCount="indefinite"
+					/></path
+				></svg
+			>
+		</div>
+	{:else if error}
+		<section class="flex h-screen justify-center items-center">
+			<h1 class="p-[3rem] font-mono text-3xl font-semibold">Could not connect to server</h1>
+		</section>
+	{:else if localboard && localboard.length > 0}
 		<button
 			on:click={exit}
 			class="mt-3 px-6 p-3 max-w-sm mx-auto bg-white text-black-600 font-semibold rounded-xl shadow-lg flex items-center border border-gray-200 space-x-4 hover:text-white hover:bg-purple-600 hover:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2"
@@ -48,7 +77,7 @@
 				<GridButton tile_num={tile.tile_num} color={tile.color} />
 			{/each}
 		</div>
-	{:else if !loading}
+	{:else}
 		<div class="flex m-7 flex-col gap-9 ">
 			<button
 				on:click={createRoom}

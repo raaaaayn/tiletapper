@@ -5,7 +5,8 @@ import preprocess from 'svelte-preprocess';
 const config = {
 	// for more information about preprocessors
 	preprocess: preprocess({
-		postcss: true
+		postcss: true,
+		replace: [[/process\.env\.NODE_ENV/g, JSON.stringify(process.env.NODE_ENV)]]
 	}),
 
 	kit: {

@@ -3,7 +3,12 @@ use actix_files::NamedFile;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use dotenv::dotenv;
-use std::path::PathBuf;
+use std::path::{PathBuf,Path};
+
+async fn content(_req: HttpRequest) -> actix_web::Result<NamedFile> {
+    let path: PathBuf = Path::new("./static").join::<PathBuf>(_req.match_info().query("filename").parse().unwrap());
+    Ok(NamedFile::open(path)?)
+}
 
 async fn index(_req: HttpRequest) -> actix_web::Result<NamedFile> {
     let path: PathBuf = "./static/index.html".parse().unwrap();
@@ -34,8 +39,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(server.clone()))
+            .route("/", web::get().to(index))
             .route("/ws", web::get().to(new_websocket_connection))
-            .route("/{filename:.*}", web::get().to(index))
+            .route("/{filename:.*}", web::get().to(content))
             .wrap(actix_web::middleware::Logger::default())
     })
     .workers(2)
