@@ -45,7 +45,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(actix_web::middleware::Logger::default())
     })
     .workers(2)
-    .bind(("127.0.0.1", 9001))?
+    .bind(("0.0.0.0", 9001))?
     .run()
     .await
 }
