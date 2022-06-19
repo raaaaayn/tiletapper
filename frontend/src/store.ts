@@ -23,11 +23,12 @@ const boardArray: Array<{ tile_num: number; color: string }> = [];
 const board = writable(boardArray);
 
 const connect = () => {
-	console.log();
 	const lws =
 		process.env.NODE_ENV === 'production'
-			? new WebSocket(`ws://${window.location.host}/ws`)
+			? new WebSocket(`wss://${window.location.host}/ws`)
 			: new WebSocket(`ws://${import.meta.env.VITE_BACKEND}/ws`);
+
+	console.log(`backend ${lws.url}`);
 	socket.update(() => ({
 		socket: lws,
 		loading: false
