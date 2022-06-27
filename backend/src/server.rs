@@ -41,7 +41,7 @@ impl Server {
             client_addr: msg.client_addr,
             room_id: id,
         });
-        self.rooms.insert(id, room.clone());
+        self.rooms.insert(id, room);
         let rooms_str = format!("Room\n{}", id.to_string());
         self.send_message_to_all_clients(rooms_str);
         id
@@ -112,7 +112,7 @@ impl Handler<Connect> for Server {
 impl Handler<CreateRoomMessage> for Server {
     type Result = ();
     fn handle(&mut self, msg: CreateRoomMessage, _: &mut Context<Self>) -> Self::Result {
-        self.create_room(msg.clone());
+        self.create_room(msg);
     }
 }
 

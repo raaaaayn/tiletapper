@@ -27,7 +27,7 @@ struct BoardData {
 impl Actor for Client {
     type Context = ws::WebsocketContext<Self>;
     fn started(&mut self, ctx: &mut Self::Context) {
-        let addr = ctx.address().clone();
+        let addr = ctx.address();
         self.server
             .send(Connect {
                 addr: addr.clone().recipient(),
@@ -63,25 +63,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
         let msg = msg.unwrap();
         match msg {
             ws::Message::Text(text) => {
-                let msg = format!("{}", text.trim());
+                let msg = text.trim().to_string();
                 if msg.starts_with("create") {
                     self.server.do_send(CreateRoomMessage {
                         client_id: self.id,
-                        client_addr: ctx.address().clone(),
+                        client_addr: ctx.address(),
                     })
                 } else if msg.starts_with("join") {
-                    let raw_str: Vec<&str> = msg.rsplitn(2, "\n").collect();
+                    let raw_str: Vec<&str> = msg.rsplitn(2, '\n').collect();
                     match raw_str.get(0) {
                         Some(str_id) => {
                             let id = str_id.parse::<u32>();
                             match id {
-                                Ok(id) => {
-                                    self.server.do_send(JoinRoomMessage {
-                                        client_id: self.id,
-                                        client_addr: ctx.address().clone(),
-                                        room_id: id,
-                                    })
-                                }
+                                Ok(id) => self.server.do_send(JoinRoomMessage {
+                                    client_id: self.id,
+                                    client_addr: ctx.address(),
+                                    room_id: id,
+                                }),
                                 Err(e) => {
                                     eprintln!("{}", e);
                                 }

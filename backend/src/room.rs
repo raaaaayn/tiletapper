@@ -48,7 +48,7 @@ impl Room {
         }
     }
     fn send_message_to_self(&self, client_addr: Addr<client::Client>, msg: String) {
-        client_addr.do_send(Message(msg.clone()));
+        client_addr.do_send(Message(msg));
     }
 }
 
@@ -57,9 +57,7 @@ impl Handler<ClientMessage> for Room {
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
         let tile = self.board.get_mut(&msg.msg.tile_num);
         match tile {
-            Some(color) => {
-                *color = msg.msg.color.clone()
-            }
+            Some(color) => *color = msg.msg.color.clone(),
             None => {}
         }
         let stringified = serde_json::to_string(&msg.msg);
@@ -82,7 +80,7 @@ impl Handler<JoinRoomMessage> for Room {
             .board
             .iter()
             .map(|(tile_num, color)| Tile {
-                tile_num: tile_num.clone(),
+                tile_num: *tile_num,
                 color: color.clone(),
             })
             .collect();
