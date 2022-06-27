@@ -27,12 +27,12 @@ struct BoardData {
 impl Actor for Client {
     type Context = ws::WebsocketContext<Self>;
     fn started(&mut self, ctx: &mut Self::Context) {
-        println!("New websocket connection");
         let addr = ctx.address().clone();
         self.server
             .send(Connect {
                 addr: addr.clone().recipient(),
                 inbox_addr: addr,
+                color: self.color.to_owned(),
             })
             .into_actor(self)
             .then(|res, act, ctx| {
@@ -47,7 +47,6 @@ impl Actor for Client {
     }
 
     fn stopping(&mut self, _ctx: &mut Self::Context) -> Running {
-        println!("Socket closed");
         self.server.do_send(Disconnect { id: self.id });
         match self.room.as_ref() {
             Some(room) => {
@@ -64,10 +63,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
         let msg = msg.unwrap();
         match msg {
             ws::Message::Text(text) => {
-                println!("Got message");
                 let msg = format!("{}", text.trim());
                 if msg.starts_with("create") {
-                    println!("client wants to create room");
                     self.server.do_send(CreateRoomMessage {
                         client_id: self.id,
                         client_addr: ctx.address().clone(),
@@ -79,7 +76,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                             let id = str_id.parse::<u32>();
                             match id {
                                 Ok(id) => {
-                                    println!("client wants to join room");
                                     self.server.do_send(JoinRoomMessage {
                                         client_id: self.id,
                                         client_addr: ctx.address().clone(),
@@ -105,7 +101,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                     };
                     match self.room.as_ref() {
                         Some(room) => {
-                            println!("Received tile");
                             room.do_send(ClientMessage {
                                 id: self.id,
                                 msg: tile,

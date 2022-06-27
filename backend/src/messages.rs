@@ -26,6 +26,7 @@ pub struct JoinRoomMessage {
 pub struct Connect {
     pub addr: Recipient<Message>,
     pub inbox_addr: Addr<client::Client>,
+    pub color: String,
 }
 
 #[derive(Message, Debug, Clone)]

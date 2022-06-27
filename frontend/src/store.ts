@@ -25,7 +25,9 @@ const board = writable(boardArray);
 const connect = () => {
 	const lws =
 		process.env.NODE_ENV === 'production'
-			? new WebSocket(`wss://${window.location.host}/ws`)
+			? window.location.protocol === 'http:'
+				? new WebSocket(`ws://${window.location.host}/ws`)
+				: new WebSocket(`wss://${window.location.host}/ws`)
 			: new WebSocket(`ws://${import.meta.env.VITE_BACKEND}/ws`);
 
 	console.log(`backend ${lws.url}`);

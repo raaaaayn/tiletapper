@@ -32,7 +32,6 @@ impl Server {
     fn create_room(&mut self, msg: CreateRoomMessage) -> u32 {
         let mut th = thread_rng();
         let id: u32 = th.gen();
-        println!("Room created");
         let room = Room::new().start();
         msg.client_addr.do_send(ConnectClientToRoom {
             room_addr: room.clone(),
@@ -55,7 +54,6 @@ impl Server {
                 msg.client_addr.do_send(ConnectClientToRoom {
                     room_addr: room.clone(),
                 });
-                println!("join room message sent from server");
                 room.do_send(JoinRoomMessage {
                     client_id: msg.client_id,
                     client_addr: msg.client_addr,
@@ -72,19 +70,16 @@ impl Server {
     }
     fn delete_room(&mut self, id: u32) -> u32 {
         self.rooms.remove(&id);
-        println!("\n{:#?}\n", self.rooms);
         id
     }
     fn add_client(&mut self, addr: Addr<Client>) -> u32 {
         let mut th = thread_rng();
         let id: u32 = th.gen();
-        println!("Client {} added", id);
         self.clients.insert(id, addr);
         id
     }
     fn remove_client(&mut self, id: u32) -> u32 {
         self.clients.remove(&id);
-        println!("\n{:#?}\n", self.clients);
         id
     }
     fn send_message_to_all_clients(&self, msg: String) {
@@ -105,6 +100,7 @@ impl Handler<Connect> for Server {
             }
             msg.addr.do_send(Message(rooms_str));
         }
+        msg.addr.do_send(Message(format!("color\n{}", msg.color)));
         // self.join_room(JoinRoomMessage {
         //     client_id: client_id.clone(),
         //     client_addr: msg.inbox_addr,

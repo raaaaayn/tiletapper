@@ -37,11 +37,9 @@ impl Room {
     fn add_client(&mut self, msg: JoinRoomMessage) {
         self.clients
             .insert(msg.client_id, msg.client_addr.recipient());
-        println!("\n{:?}\n", self.clients);
     }
     fn remove_client(&mut self, client_id: u32) -> u32 {
         self.clients.remove(&client_id);
-        println!("\n{:?}\n", self.clients);
         client_id
     }
     fn send_message_to_all_clients(&self, msg: String) {
@@ -60,7 +58,6 @@ impl Handler<ClientMessage> for Room {
         let tile = self.board.get_mut(&msg.msg.tile_num);
         match tile {
             Some(color) => {
-                println!("changed tile");
                 *color = msg.msg.color.clone()
             }
             None => {}
@@ -98,7 +95,6 @@ impl Handler<JoinRoomMessage> for Room {
             ),
         );
         self.add_client(msg);
-        println!("joined room");
     }
 }
 
