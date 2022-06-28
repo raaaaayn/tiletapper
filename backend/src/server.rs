@@ -68,7 +68,7 @@ impl Server {
             }
         }
     }
-    fn delete_room(&mut self, id: u32) -> u32 {
+    fn _delete_room(&mut self, id: u32) -> u32 {
         self.rooms.remove(&id);
         id
     }
@@ -86,6 +86,12 @@ impl Server {
         for (_id, addr) in self.clients.iter() {
             addr.do_send(Message(msg.clone()));
         }
+    }
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

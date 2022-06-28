@@ -33,21 +33,21 @@
 	function createRoom() {
 		const store = get(socket);
 		if (store.socket) {
-			store.socket.send('create');
-			toast.push("Created room")
+			store.socket.send(JSON.stringify({ type: 'Create' }));
+			toast.push('Created room');
 		}
 	}
 	function joinRoom(roomid: string) {
 		const store = get(socket);
 		if (store.socket) {
-			store.socket.send(`join\n${roomid}`);
+			store.socket.send(JSON.stringify({ type: 'Join', data: parseInt(roomid) }));
 			roomId = roomid;
 		}
 	}
 	function exit() {
 		const store = get(socket);
 		if (store.socket) {
-			store.socket.send(`exit`);
+			store.socket.send(JSON.stringify({ type: `Exit` }));
 			board.update(() => []);
 		}
 	}

@@ -5,7 +5,7 @@
 	export let color: string;
 	function sendMessage() {
 		const store = get(socket);
-		if (store.socket) store.socket.send(JSON.stringify({ tile_num }));
+		if (store.socket) store.socket.send(JSON.stringify({ type: 'Tile', data: tile_num }));
 	}
 </script>
 

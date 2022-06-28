@@ -52,14 +52,19 @@ impl Room {
     }
 }
 
+impl Default for Room {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Handler<ClientMessage> for Room {
     type Result = ();
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
         let tile = self.board.get_mut(&msg.msg.tile_num);
-        match tile {
-            Some(color) => *color = msg.msg.color.clone(),
-            None => {}
-        }
+
+        if let Some(color) = tile { *color = msg.msg.color.clone() }
+
         let stringified = serde_json::to_string(&msg.msg);
         match stringified {
             Ok(msg) => {

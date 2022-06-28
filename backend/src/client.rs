@@ -11,6 +11,20 @@ use crate::messages::{
 use crate::room::{self, Room};
 use crate::server;
 
+#[derive(Serialize, Deserialize, Debug)]
+pub enum GameMessageType {
+    Create,
+    Join,
+    Tile,
+    Exit,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GameMessage {
+    pub r#type: GameMessageType,
+    pub data: Option<u32>,
+}
+
 #[derive(Debug)]
 pub struct Client {
     pub id: u32,
@@ -48,11 +62,8 @@ impl Actor for Client {
 
     fn stopping(&mut self, _ctx: &mut Self::Context) -> Running {
         self.server.do_send(Disconnect { id: self.id });
-        match self.room.as_ref() {
-            Some(room) => {
-                room.do_send(Disconnect { id: self.id });
-            }
-            None => {}
+        if let Some(room) = self.room.as_ref() {
+            room.do_send(Disconnect { id: self.id });
         }
         Running::Stop
     }
@@ -64,48 +75,40 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
         match msg {
             ws::Message::Text(text) => {
                 let msg = text.trim().to_string();
-                if msg.starts_with("create") {
-                    self.server.do_send(CreateRoomMessage {
-                        client_id: self.id,
-                        client_addr: ctx.address(),
-                    })
-                } else if msg.starts_with("join") {
-                    let raw_str: Vec<&str> = msg.rsplitn(2, '\n').collect();
-                    match raw_str.get(0) {
-                        Some(str_id) => {
-                            let id = str_id.parse::<u32>();
-                            match id {
-                                Ok(id) => self.server.do_send(JoinRoomMessage {
+                if let Ok(game_msg) = serde_json::from_str::<GameMessage>(&msg) {
+                    match game_msg.r#type {
+                        GameMessageType::Join => {
+                            if let Some(id) = game_msg.data {
+                                self.server.do_send(JoinRoomMessage {
                                     client_id: self.id,
                                     client_addr: ctx.address(),
                                     room_id: id,
-                                }),
-                                Err(e) => {
-                                    eprintln!("{}", e);
-                                }
+                                })
                             }
                         }
-                        None => {}
-                    }
-                } else if msg.starts_with("exit") {
-                    self.room = None;
-                    self.server.do_send(Disconnect { id: self.id });
-                } else {
-                    let board_data =
-                        serde_json::from_str(&msg).unwrap_or(BoardData { tile_num: 0 });
-                    let tile = room::Tile {
-                        tile_num: board_data.tile_num,
-                        color: Some(self.color.to_owned()),
-                    };
-                    match self.room.as_ref() {
-                        Some(room) => {
-                            room.do_send(ClientMessage {
-                                id: self.id,
-                                msg: tile,
-                            });
+                        GameMessageType::Create => {
+                            self.server.do_send(CreateRoomMessage {
+                                client_id: self.id,
+                                client_addr: ctx.address(),
+                            })
                         }
-                        None => {
-                            println!("Received tile but no room to send it to")
+                        GameMessageType::Tile => {
+                            if let Some(room) = self.room.as_ref() {
+                                if let Some(tile_num) = game_msg.data {
+                                    let tile = room::Tile {
+                                        tile_num: tile_num as u16,
+                                        color: Some(self.color.to_owned()),
+                                    };
+                                    room.do_send(ClientMessage {
+                                        id: self.id,
+                                        msg: tile,
+                                    });
+                                };
+                            }
+                        }
+                        GameMessageType::Exit => {
+                            self.room = None;
+                            self.server.do_send(Disconnect { id: self.id });
                         }
                     }
                 }
