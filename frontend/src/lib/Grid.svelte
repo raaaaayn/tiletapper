@@ -98,8 +98,8 @@
 			>
 		</div>
 		<div class="flex flex-wrap m-7 justify-center">
-			{#each localboard as tile, _i}
-				<GridButton tile_num={tile.tile_num} color={tile.color} />
+			{#each localboard as tile, i}
+				<GridButton tile_num={i} color={tile} />
 			{/each}
 		</div>
 	{:else}

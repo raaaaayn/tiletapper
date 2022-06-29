@@ -86,18 +86,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                                 })
                             }
                         }
-                        GameMessageType::Create => {
-                            self.server.do_send(CreateRoomMessage {
-                                client_id: self.id,
-                                client_addr: ctx.address(),
-                            })
-                        }
+                        GameMessageType::Create => self.server.do_send(CreateRoomMessage {
+                            client_id: self.id,
+                            client_addr: ctx.address(),
+                        }),
                         GameMessageType::Tile => {
                             if let Some(room) = self.room.as_ref() {
                                 if let Some(tile_num) = game_msg.data {
                                     let tile = room::Tile {
                                         tile_num: tile_num as u16,
-                                        color: Some(self.color.to_owned()),
+                                        color: self.color.to_owned(),
                                     };
                                     room.do_send(ClientMessage {
                                         id: self.id,

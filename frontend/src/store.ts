@@ -12,7 +12,7 @@ const socket = writable<wsocket>({
 
 const rooms = writable<string[]>([]);
 
-const boardArray: Array<{ tile_num: number; color: string }> = [];
+const boardArray: Array<string> = [];
 
 // for (let i = 0; i < 3; i++) {
 // 	for (let j = 0; j < 5; j++) {
@@ -44,9 +44,7 @@ const connect = () => {
 	lws.addEventListener('message', function (event) {
 		if (event.data && event.data.startsWith('board')) {
 			console.log('got board', event.data);
-			const result: Array<{ tile_num: number; color: string }> = JSON.parse(
-				event.data.split('\n')[1]
-			);
+			const result: Array<string> = JSON.parse(event.data.split('\n')[1]);
 			board.update(() => result);
 		} else if (event.data && event.data.startsWith('rooms')) {
 			const data = event.data.split('\n');
@@ -65,12 +63,10 @@ const connect = () => {
 			});
 		} else {
 			const result: { tile_num: number; color: string } = JSON.parse(event.data.split('\n')[1]);
-			console.log('got tile', result);
 			board.update((board) =>
-				board.map((tile) => {
-					console.log(tile, result);
-					if (tile.tile_num != result.tile_num) return tile;
-					return result;
+				board.map((boardTile, index) => {
+					if (index != result.tile_num) return boardTile;
+					return result.color;
 				})
 			);
 		}

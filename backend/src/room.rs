@@ -11,12 +11,12 @@ use crate::{
 #[derive(Deserialize, Serialize)]
 pub struct Tile {
     pub tile_num: u16,
-    pub color: Option<String>,
+    pub color: String,
 }
 
 pub struct Room {
     pub clients: HashMap<u32, Recipient<Message>>,
-    pub board: HashMap<u16, Option<String>>,
+    pub board: Vec<String>,
 }
 
 impl Actor for Room {
@@ -25,9 +25,9 @@ impl Actor for Room {
 
 impl Room {
     pub fn new() -> Room {
-        let mut board: HashMap<u16, Option<String>> = HashMap::new();
+        let mut board: Vec<String> = Vec::new();
         for n in 0..21 {
-            board.insert(n, None);
+            board.push("rgb(255,255,255)".to_owned());
         }
         Room {
             clients: HashMap::default(),
@@ -61,9 +61,13 @@ impl Default for Room {
 impl Handler<ClientMessage> for Room {
     type Result = ();
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
-        let tile = self.board.get_mut(&msg.msg.tile_num);
+        let tile = self.board.get_mut(msg.msg.tile_num as usize); // cannot index into vec with u16
+                                                                  // because SliceIndex trait is
+                                                                  // only implemented for usize
 
-        if let Some(color) = tile { *color = msg.msg.color.clone() }
+        if let Some(color) = tile {
+            *color = msg.msg.color.clone()
+        }
 
         let stringified = serde_json::to_string(&msg.msg);
         match stringified {
@@ -80,22 +84,19 @@ impl Handler<ClientMessage> for Room {
 impl Handler<JoinRoomMessage> for Room {
     type Result = ();
     fn handle(&mut self, msg: JoinRoomMessage, _: &mut Context<Self>) {
-        // converting board hasmap to vector
-        let mut constructed_board: Vec<Tile> = self
-            .board
-            .iter()
-            .map(|(tile_num, color)| Tile {
-                tile_num: *tile_num,
-                color: color.clone(),
-            })
-            .collect();
-        constructed_board.sort_by_key(|tile| tile.tile_num);
+        // // converting board hasmap to vector
+        // let mut constructed_board: Vec<Tile> = self
+        //     .board
+        //     .iter()
+        //     .map(|(tile_num, color)| Tile {
+        //         tile_num: *tile_num,
+        //         color: color.clone(),
+        //     })
+        //     .collect();
+        // constructed_board.sort_by_key(|tile| tile.tile_num);
         self.send_message_to_self(
             msg.client_addr.clone(),
-            format!(
-                "board\n{}",
-                serde_json::to_string(&constructed_board).unwrap()
-            ),
+            format!("board\n{}", serde_json::to_string(&self.board).unwrap()),
         );
         self.add_client(msg);
     }

@@ -3,10 +3,14 @@ use actix_files::NamedFile;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use dotenv::dotenv;
-use std::path::{PathBuf,Path};
+use std::path::{Path, PathBuf};
+
+use tiletapper::client::Client;
+use tiletapper::server;
 
 async fn content(_req: HttpRequest) -> actix_web::Result<NamedFile> {
-    let path: PathBuf = Path::new("./static").join::<PathBuf>(_req.match_info().query("filename").parse().unwrap());
+    let path: PathBuf =
+        Path::new("./static").join::<PathBuf>(_req.match_info().query("filename").parse().unwrap());
     Ok(NamedFile::open(path)?)
 }
 
@@ -14,9 +18,6 @@ async fn index(_req: HttpRequest) -> actix_web::Result<NamedFile> {
     let path: PathBuf = "./static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)
 }
-
-use tiletapper::client::Client;
-use tiletapper::server;
 
 async fn new_websocket_connection(
     r: HttpRequest,
