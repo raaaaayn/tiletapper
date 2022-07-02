@@ -2,7 +2,7 @@
 	import GridButton from './GridButton.svelte';
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
-	import { connect, board, socket, rooms } from '../store';
+	import { connect, board, socket, rooms, playerColor, playerColorLight, playerColorDark } from '../store';
 	import { toast } from '@zerodevx/svelte-toast';
 
 	let localboard = get(board);
@@ -53,7 +53,7 @@
 	}
 </script>
 
-<div>
+<div style="--bg-light={playerColorLight};--bg-dark={playerColorDark};">
 	{#if loading}
 		<div class="flex h-screen justify-center items-center">
 			<svg width="89" height="89" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +99,13 @@
 		</div>
 		<div class="flex flex-wrap m-7 justify-center">
 			{#each localboard as tile, i}
-				<GridButton tile_num={i} color={tile} />
+				<GridButton
+					--bg={$playerColor}
+					--bg-light={$playerColorLight}
+					--bg-dark={$playerColorDark}
+					tile_num={i}
+					tileColor={tile}
+				/>
 			{/each}
 		</div>
 	{:else}

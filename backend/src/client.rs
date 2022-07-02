@@ -134,7 +134,7 @@ impl Client {
             id: gen_id(),
             room: room_addr,
             server: server_addr,
-            color: random_color::RandomColor::new().to_rgb_string(),
+            color: random_color::RandomColor::new().to_hex(),
         }
     }
 }

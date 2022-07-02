@@ -26,8 +26,8 @@ impl Actor for Room {
 impl Room {
     pub fn new() -> Room {
         let mut board: Vec<String> = Vec::new();
-        for n in 0..21 {
-            board.push("rgb(255,255,255)".to_owned());
+        for _ in 0..21 {
+            board.push("#FFFFFF".to_owned());
         }
         Room {
             clients: HashMap::default(),

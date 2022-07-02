@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import pSBC from './colorUtil';
 
 type wsocket = {
 	socket: WebSocket | null;
@@ -11,6 +12,9 @@ const socket = writable<wsocket>({
 });
 
 const rooms = writable<string[]>([]);
+const playerColor = writable('#ffff');
+const playerColorLight = writable('#ffff');
+const playerColorDark = writable('#ffff');
 
 const boardArray: Array<string> = [];
 
@@ -61,6 +65,14 @@ const connect = () => {
 			rooms.update((rooms) => {
 				return (rooms = [...rooms, result]);
 			});
+		} else if (event.data && event.data.startsWith('color')) {
+			console.log(event.data);
+			console.log(event.data.split('\n'));
+			const result: string = event.data.split('\n')[1];
+			console.log('got color', result);
+			playerColor.update(() => result);
+			playerColorLight.update(() => pSBC(0.1, result) as string);
+			playerColorDark.update(() => pSBC(-0.1, result) as string);
 		} else {
 			const result: { tile_num: number; color: string } = JSON.parse(event.data.split('\n')[1]);
 			board.update((board) =>
@@ -74,4 +86,4 @@ const connect = () => {
 	return lws;
 };
 
-export { socket, connect, board, rooms };
+export { socket, connect, board, rooms, playerColor, playerColorLight, playerColorDark };

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.css';
 	import { SvelteToast } from '@zerodevx/svelte-toast';
+	import { playerColor } from '../store';
+	
 	const options = {
 		duration: 1000, // duration of progress bar tween to the `next` value
 		dismissable: true, // allow dismiss with close button
@@ -8,7 +10,9 @@
 	};
 </script>
 
-<main class="bg:dark h-screen overflow-auto bg-gradient-to-br from-gray-50 to-gray-300">
+<main
+	class="bg:dark h-screen overflow-auto bg-gradient-to-br from-gray-50 to-gray-300"
+>
 	<slot />
 	<SvelteToast {options} />
 </main>
