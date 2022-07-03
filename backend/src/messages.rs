@@ -35,17 +35,24 @@ pub struct Disconnect {
     pub id: u32,
 }
 
+#[derive(Message, Debug, Clone)]
+#[rtype(result = "()")]
+pub struct RemoveFromRoom {
+    pub client_id: u32,
+}
+
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct ClientMessage {
+pub struct TileMessage {
     /// Id of the client session
     pub id: u32,
     /// Peer message
     pub msg: room::Tile,
+    pub room_id: u32,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ConnectClientToRoom {
-    pub room_addr: Addr<room::Room>,
+    pub room_id: u32,
 }
