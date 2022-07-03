@@ -45,7 +45,6 @@ async fn main() -> std::io::Result<()> {
             .route("/{filename:.*}", web::get().to(content))
             .wrap(actix_web::middleware::Logger::default())
     })
-    .workers(2)
     .bind(("0.0.0.0", 9001))?
     .run()
     .await
