@@ -17,10 +17,7 @@ pub struct Room {
 
 impl Room {
     pub fn new() -> Room {
-        let mut board: Vec<String> = Vec::new();
-        for _ in 0..21 {
-            board.push("#FFFFFF".to_owned());
-        }
+        let board: Vec<String> = vec!["#FFFFFF".to_owned(); 20];
         Room {
             clients: HashMap::default(),
             board,

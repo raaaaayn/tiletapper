@@ -2,7 +2,15 @@
 	import GridButton from './GridButton.svelte';
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
-	import { connect, board, socket, rooms, playerColor, playerColorLight, playerColorDark } from '../store';
+	import {
+		connect,
+		board,
+		socket,
+		rooms,
+		playerColor,
+		playerColorLight,
+		playerColorDark
+	} from '../store';
 	import { toast } from '@zerodevx/svelte-toast';
 
 	let localboard = get(board);

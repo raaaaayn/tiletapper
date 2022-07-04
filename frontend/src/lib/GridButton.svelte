@@ -13,13 +13,13 @@
 	class={`h-20 shrink-1 grow-1 grid-button border border-gray-300 sm:border-6 hover:bg-[${tileColor}]-600 bg-[var(--bg)]-1000`}
 	on:click={sendMessage}
 	style="background-color: {tileColor || 'white'};"
->
-	{tile_num}
-</button>
+/>
 
 <style>
 	.grid-button {
 		flex-basis: 33%;
+		/* width: 1rem; */
+		/* height: 1rem; */
 	}
 	.grid-button:hover {
 		background-color: var(--bg-light) !important;
@@ -32,6 +32,7 @@
 	}
 	@media (min-width: 40em) {
 		.grid-button {
+			/* width: 1rem; */
 			flex-basis: 18%;
 		}
 	}
