@@ -6,6 +6,11 @@ type wsocket = {
 	loading: boolean;
 };
 
+type GameMessage = {
+	type: 'Color' | 'Tile' | 'Room' | 'Rooms' | 'Board';
+	data: string;
+};
+
 const socket = writable<wsocket>({
 	socket: null,
 	loading: true
@@ -17,12 +22,6 @@ const playerColorLight = writable('#ffff');
 const playerColorDark = writable('#ffff');
 
 const boardArray: Array<string> = [];
-
-// for (let i = 0; i < 3; i++) {
-// 	for (let j = 0; j < 5; j++) {
-// 		boardArray.push({ x: j, y: i });
-// 	}
-// }
 
 const board = writable(boardArray);
 
@@ -46,41 +45,45 @@ const connect = () => {
 	});
 
 	lws.addEventListener('message', function (event) {
-		if (event.data && event.data.startsWith('board')) {
-			console.log('got board', event.data);
-			const result: Array<string> = JSON.parse(event.data.split('\n')[1]);
-			board.update(() => result);
-		} else if (event.data && event.data.startsWith('rooms')) {
-			const data = event.data.split('\n');
-			console.log('rooms updated');
-			console.log(event.data);
-			console.log(data);
-			console.log(data.slice(1, data.length));
-			rooms.update(() => data.slice(1, data.length));
-		} else if (event.data && event.data.startsWith('Room')) {
-			console.log(event.data);
-			console.log(event.data.split('\n'));
-			const result: string = JSON.parse(event.data.split('\n')[1]);
-			console.log('got room', result);
-			rooms.update((rooms) => {
-				return (rooms = [...rooms, result]);
-			});
-		} else if (event.data && event.data.startsWith('color')) {
-			console.log(event.data);
-			console.log(event.data.split('\n'));
-			const result: string = event.data.split('\n')[1];
-			console.log('got color', result);
-			playerColor.update(() => result);
-			playerColorLight.update(() => pSBC(0.1, result) as string);
-			playerColorDark.update(() => pSBC(-0.1, result) as string);
-		} else {
-			const result: { tile_num: number; color: string } = JSON.parse(event.data.split('\n')[1]);
-			board.update((board) =>
-				board.map((boardTile, index) => {
-					if (index != result.tile_num) return boardTile;
-					return result.color;
-				})
-			);
+		const data: GameMessage = JSON.parse(event.data);
+		switch (data.type) {
+			case 'Room': {
+				rooms.update((rooms) => {
+					return (rooms = [...rooms, data.data]);
+				});
+				break;
+			}
+			case 'Board': {
+				const res: Array<string> = JSON.parse(data.data);
+				board.update(() => res);
+				break;
+			}
+			case 'Rooms': {
+				const dataStripped = data.data.replace(']', '').replace('[', '').split(',');
+				rooms.update(() => dataStripped);
+				break;
+			}
+			case 'Color': {
+				const result = data.data;
+				console.log('got color', result);
+				playerColor.update(() => result);
+				playerColorLight.update(() => pSBC(0.1, result) as string);
+				playerColorDark.update(() => pSBC(-0.1, result) as string);
+				break;
+			}
+			case 'Tile': {
+				const result: { tile_num: number; color: string } = JSON.parse(data.data);
+				board.update((board) =>
+					board.map((boardTile, index) => {
+						if (index != result.tile_num) return boardTile;
+						return result.color;
+					})
+				);
+				break;
+			}
+			default:
+				console.log('Invalid data');
+				console.log(data);
 		}
 	});
 	return lws;

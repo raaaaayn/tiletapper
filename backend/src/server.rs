@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::{
@@ -11,6 +12,21 @@ use crate::{
 
 use actix::prelude::*;
 use rand::prelude::*;
+
+#[derive(Serialize, Deserialize)]
+pub enum FrontendMessageType {
+    Board,
+    Rooms,
+    Room,
+    Color,
+    Tile,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FrontendMessage {
+    pub r#type: FrontendMessageType,
+    pub data: String,
+}
 
 pub struct Server {
     pub rooms: HashMap<u32, Room>,
@@ -42,12 +58,18 @@ impl Server {
 
         self.send_message_through_client(
             &msg.client_id,
-            format!("board\n{}", serde_json::to_string(&room.board).unwrap()),
+            FrontendMessage {
+                r#type: FrontendMessageType::Board,
+                data: serde_to_string(&room.board).unwrap_or_default(),
+            },
         );
         msg.client_addr.do_send(ConnectClientToRoom { room_id: id });
 
         self.rooms.insert(id, room);
-        self.send_message_through_all_clients(format!("Room\n{}", id.to_string()));
+        self.send_message_through_all_clients(FrontendMessage {
+            r#type: FrontendMessageType::Room,
+            data: id.to_string(),
+        });
         id
     }
 
@@ -69,7 +91,10 @@ impl Server {
             // println!("got immut");
             self.send_message_through_client(
                 &msg.client_id,
-                format!("board\n{}", serde_json::to_string(&room.board).unwrap()),
+                FrontendMessage {
+                    r#type: FrontendMessageType::Board,
+                    data: serde_to_string(&room.board).unwrap_or_default(),
+                },
             );
         }
     }
@@ -87,14 +112,18 @@ impl Server {
         self.clients.remove(&id);
         id
     }
-    fn send_message_through_client(&self, client_id: &u32, msg: String) {
+    fn send_message_through_client(&self, client_id: &u32, msg: FrontendMessage) {
         if let Some(client_addr) = self.clients.get(client_id) {
-            client_addr.do_send(Message(msg))
+            if let Some(str) = serde_to_string(&msg) {
+                client_addr.do_send(Message(str))
+            }
         }
     }
-    fn send_message_through_all_clients(&self, msg: String) {
+    fn send_message_through_all_clients(&self, msg: FrontendMessage) {
         for (_id, addr) in self.clients.iter() {
-            addr.do_send(Message(msg.clone()));
+            if let Some(str) = serde_to_string(&msg) {
+                addr.do_send(Message(str));
+            }
         }
     }
 }
@@ -114,13 +143,21 @@ impl Handler<Connect> for Server {
             for key in self.rooms.keys().into_iter() {
                 rooms_str += &format!("\n{}", key);
             }
-            msg.addr.do_send(Message(rooms_str));
+            if let Some(str) = serde_to_string(&self.rooms.keys().collect::<Vec<&u32>>()) {
+                if let Some(str) = serde_to_string(&FrontendMessage {
+                    r#type: FrontendMessageType::Rooms,
+                    data: str,
+                }) {
+                    msg.addr.do_send(Message(str));
+                }
+            }
         }
-        msg.addr.do_send(Message(format!("color\n{}", msg.color)));
-        // self.join_room(JoinRoomMessage {
-        //     client_id: client_id.clone(),
-        //     client_addr: msg.inbox_addr,
-        // });
+        if let Some(str) = serde_to_string(&FrontendMessage {
+            r#type: FrontendMessageType::Color,
+            data: msg.color,
+        }) {
+            msg.addr.do_send(Message(str));
+        }
         client_id
     }
 }
@@ -174,13 +211,29 @@ impl Handler<TileMessage> for Server {
             let stringified = serde_json::to_string(&msg.msg);
             match stringified {
                 Ok(msg) => {
-                    let _ = room.send_message_to_all_clients(format!("tile\n{}", msg));
+                    if let Some(str) = serde_to_string(&FrontendMessage {
+                        r#type: FrontendMessageType::Tile,
+                        data: msg,
+                    }) {
+                        room.send_message_to_all_clients(str);
+                    }
                     // println!("msg");
                 }
                 Err(e) => {
                     eprintln!("{}", e);
                 }
             };
+        }
+    }
+}
+
+fn serde_to_string<T: Serialize>(msg: &T) -> Option<String> {
+    let res = serde_json::to_string(msg);
+    match res {
+        Ok(str) => Some(str),
+        Err(err) => {
+            eprintln!("Failed to convert to string {}", err);
+            None
         }
     }
 }

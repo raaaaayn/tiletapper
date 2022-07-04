@@ -2,18 +2,18 @@ use actix::prelude::*;
 
 use crate::{client, room};
 
-#[derive(Message, Debug)]
+#[derive(Message)]
 #[rtype(result = "()")]
 pub struct Message(pub String);
 
-#[derive(Message, Debug, Clone)]
+#[derive(Message)]
 #[rtype(result = "()")]
 pub struct CreateRoomMessage {
     pub client_id: u32,
     pub client_addr: Addr<client::Client>,
 }
 
-#[derive(Message, Debug)]
+#[derive(Message)]
 #[rtype(result = "()")]
 pub struct JoinRoomMessage {
     pub client_id: u32,
@@ -21,7 +21,7 @@ pub struct JoinRoomMessage {
     pub room_id: u32,
 }
 
-#[derive(Message, Debug)]
+#[derive(Message)]
 #[rtype(u32)]
 pub struct Connect {
     pub addr: Recipient<Message>,
@@ -29,13 +29,13 @@ pub struct Connect {
     pub color: String,
 }
 
-#[derive(Message, Debug, Clone)]
+#[derive(Message)]
 #[rtype(u32)]
 pub struct Disconnect {
     pub id: u32,
 }
 
-#[derive(Message, Debug, Clone)]
+#[derive(Message)]
 #[rtype(result = "()")]
 pub struct RemoveFromRoom {
     pub client_id: u32,

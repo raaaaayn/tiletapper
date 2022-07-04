@@ -11,7 +11,7 @@ use crate::messages::{
 use crate::room;
 use crate::server;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub enum GameMessageType {
     Create,
     Join,
@@ -19,13 +19,12 @@ pub enum GameMessageType {
     Exit,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct GameMessage {
     pub r#type: GameMessageType,
     pub data: Option<u32>,
 }
 
-#[derive(Debug)]
 pub struct Client {
     pub id: u32,
     pub server: Addr<server::Server>,

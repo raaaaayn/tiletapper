@@ -10,7 +10,6 @@ pub struct Tile {
     pub color: String,
 }
 
-#[derive(Debug)]
 pub struct Room {
     pub clients: HashMap<u32, Recipient<Message>>,
     pub board: Vec<String>,

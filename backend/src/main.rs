@@ -2,7 +2,6 @@ use actix::prelude::*;
 use actix_files::NamedFile;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
-use dotenv::dotenv;
 use std::path::{Path, PathBuf};
 
 use tiletapper::client::Client;
@@ -29,8 +28,6 @@ async fn new_websocket_connection(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().ok();
-
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     log::info!("starting HTTP server at http://localhost:9001");
 
